@@ -17,6 +17,7 @@
 package com.android.systemui.biometrics;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.ContentResolver;
@@ -35,6 +36,7 @@ import android.os.Handler;
 import android.os.UserHandle;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.view.Display;
 import android.view.Gravity;
@@ -52,7 +54,6 @@ import com.android.keyguard.KeyguardUpdateMonitorCallback;
 import com.android.settingslib.utils.ThreadUtils;
 import com.android.systemui.Dependency;
 import com.android.systemui.R;
-import com.android.systemui.tuner.TunerService;
 
 import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
 import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreenCallback;
@@ -61,9 +62,9 @@ import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class FODCircleView extends ImageView implements TunerService.Tunable {
+public class FODCircleView extends ImageView {
     private static final int FADE_ANIM_DURATION = 250;
-    private final String SCREEN_BRIGHTNESS = "system:" + Settings.System.SCREEN_BRIGHTNESS;
+    private final String SCREEN_BRIGHTNESS = Settings.System.SCREEN_BRIGHTNESS;
     private final int[][] BRIGHTNESS_ALPHA_ARRAY = {
         new int[]{0, 255},
         new int[]{1, 224},
@@ -98,6 +99,7 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
     private final WindowManager mWindowManager;
 
     private IFingerprintInscreen mFingerprintInscreenDaemon;
+    private Context mContext;
 
     private int mCurrentBrightness;
     private int mDreamingOffsetX;
@@ -116,7 +118,7 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
     private final ImageView mPressedView;
 
     private LockPatternUtils mLockPatternUtils;
-	
+
     private Timer mBurnInProtectionTimer;
 
     private FODAnimation mFODAnimation;
@@ -223,6 +225,7 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
 
     public FODCircleView(Context context) {
         super(context);
+        mContext = context;
 
         setScaleType(ScaleType.CENTER);
 
@@ -312,8 +315,9 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.FOD_ANIM),
-                    false, this, UserHandle.USER_ALL);
+                    Settings.System.FOD_ANIM), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    SCREEN_BRIGHTNESS), false, this, UserHandle.USER_ALL);
         }
 
         @Override
@@ -321,18 +325,14 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
             if (uri.equals(Settings.System.getUriFor(
                     Settings.System.FOD_ANIM))) {
                 updateStyle();
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.SCREEN_BRIGHTNESS))) {
             }
         }
 
         public void update() {
             updateStyle();
         }
-    }
-
-    @Override
-    public void onTuningChanged(String key, String newValue) {
-        mCurrentBrightness = newValue != null ? Integer.parseInt(newValue) : 0;
-        updateIconDim();
     }
 
     private int interpolate(int i, int i2, int i3, int i4, int i5) {
@@ -500,7 +500,6 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
 
         updatePosition();
 
-        Dependency.get(TunerService.class).addTunable(this, SCREEN_BRIGHTNESS);
         ThreadUtils.postOnBackgroundThread(() -> {
             dispatchShow();
         });
@@ -509,7 +508,6 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
 
     public void hide() {
         setVisibility(View.GONE);
-        Dependency.get(TunerService.class).removeTunable(this);
         hideCircle();
         ThreadUtils.postOnBackgroundThread(() -> {
             dispatchHide();
@@ -525,6 +523,11 @@ public class FODCircleView extends ImageView implements TunerService.Tunable {
                 Settings.System.FOD_RECOGNIZING_ANIMATION, 0) != 0;
         mSelectedIcon = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FOD_ICON, 0);
+        mCurrentBrightness = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_BRIGHTNESS, 100);
+        if (mCurrentBrightness > 95) {
+            updateIconDim();
+        }
         if (mFODAnimation != null) {
             mFODAnimation.update();
         }
