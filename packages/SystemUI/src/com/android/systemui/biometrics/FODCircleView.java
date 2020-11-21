@@ -202,13 +202,14 @@ public class FODCircleView extends ImageView {
         @Override
         public void onDreamingStateChanged(boolean dreaming) {
             mIsDreaming = dreaming;
-            updateAlpha();
+            updateIconDim();
 
             if (dreaming) {
                 mBurnInProtectionTimer = new Timer();
                 mBurnInProtectionTimer.schedule(new BurnInProtectionTask(), 0, 60 * 1000);
             } else if (mBurnInProtectionTimer != null) {
                 mBurnInProtectionTimer.cancel();
+                mBurnInProtectionTimer = null;
                 updatePosition();
             }
         }
@@ -311,7 +312,6 @@ public class FODCircleView extends ImageView {
 
         mColorBackground = res.getColor(R.color.config_fodColorBackground);
         mPaintFingerprintBackground.setColor(mColorBackground);
-        mTargetUsesInKernelDimming = res.getBoolean(com.android.internal.R.bool.config_targetUsesInKernelDimming);
         mPaintFingerprintBackground.setAntiAlias(true);
 
         mPowerManager = context.getSystemService(PowerManager.class);
@@ -320,6 +320,7 @@ public class FODCircleView extends ImageView {
 
         mDeviceFlickersGoingToSleep = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_inDisplayFingerprintFlickersGoingToSleep);
+        mTargetUsesInKernelDimming = res.getBoolean(com.android.internal.R.bool.config_targetUsesInKernelDimming);
 
         mWindowManager = context.getSystemService(WindowManager.class);
 
@@ -401,6 +402,7 @@ public class FODCircleView extends ImageView {
                 updateStyle();
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.SCREEN_BRIGHTNESS))) {
+                updateIconDim();
             } else if (uri.equals(Settings.Secure.getUriFor(
                 Settings.Secure.DOZE_ENABLED)) || uri.equals(Settings.System.getUriFor(
                 Settings.System.FOD_GESTURE))) {
@@ -602,18 +604,15 @@ public class FODCircleView extends ImageView {
         });
     }
 
-    private void updateAlpha() {
-        setAlpha(mIsDreaming ? 0.5f : 1.0f);
-    }
-
     private void updateStyle() {
         mIsRecognizingAnimEnabled = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FOD_RECOGNIZING_ANIMATION, 0) != 0;
         mSelectedIcon = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FOD_ICON, 0);
-        mCurrentBrightness = Settings.System.getInt(mContext.getContentResolver(),
+        int brightness = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.SCREEN_BRIGHTNESS, 100);
-        if (mCurrentBrightness > 95) {
+        if (mCurrentBrightness != brightness) {
+            mCurrentBrightness = brightness;
             updateIconDim();
         }
         if (mFODAnimation != null) {
