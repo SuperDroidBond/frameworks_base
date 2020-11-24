@@ -467,19 +467,16 @@ public class FODCircleView extends ImageView {
 
         if (event.getAction() == MotionEvent.ACTION_DOWN && newIsInside) {
             showCircle();
-            if (mIsRecognizingAnimEnabled) {
-                mHandler.post(() -> mFODAnimation.showFODanimation());
-            }
             return true;
         } else if (event.getAction() == MotionEvent.ACTION_UP) {
             hideCircle();
-            mHandler.post(() -> mFODAnimation.hideFODanimation());
             return true;
         } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
             return true;
         }
-
-        mHandler.post(() -> mFODAnimation.hideFODanimation());
+        if (mIsRecognizingAnimEnabled) {
+            mHandler.post(() -> mFODAnimation.hideFODanimation());
+        }
         return false;
     }
 
@@ -552,6 +549,10 @@ public class FODCircleView extends ImageView {
             dispatchPress();
         });
 
+        if (mIsRecognizingAnimEnabled) {
+            mHandler.post(() -> mFODAnimation.showFODanimation());
+        }
+
         setImageDrawable(null);
         updateIconDim();
         invalidate();
@@ -567,6 +568,10 @@ public class FODCircleView extends ImageView {
             dispatchRelease();
         });
         setDim(false);
+
+        if (mIsRecognizingAnimEnabled) {
+            mHandler.post(() -> mFODAnimation.hideFODanimation());
+        }
 
         setKeepScreenOn(false);
     }
