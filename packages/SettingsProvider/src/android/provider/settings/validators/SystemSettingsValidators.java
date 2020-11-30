@@ -227,5 +227,6 @@ public class SystemSettingsValidators {
         VALIDATORS.put(System.RINGTONE_VIBRATION_PATTERN, new InclusiveIntegerRangeValidator(0, 5));
         VALIDATORS.put(System.CUSTOM_RINGTONE_VIBRATION_PATTERN, ANY_STRING_VALIDATOR);
         VALIDATORS.put(System.LOCKSCREEN_MEDIA_METADATA, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.FOD_GESTURE, BOOLEAN_VALIDATOR);
     }
 }
