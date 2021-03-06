@@ -184,5 +184,8 @@
     <!-- Whether device supports in-display fingerprint when screen is turned off -->
     <bool name="config_supportScreenOffFod">false</bool>
 
-</resources>
+    <!-- Smart cutoff -->
+    <integer name="config_smartCutoffTemperature">30</integer>
+    <integer name="config_smartCutoffResumeTemperature">25</integer>
 
+</resources>

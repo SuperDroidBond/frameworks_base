@@ -227,4 +227,8 @@
   <!-- Whether device supports in-display fingerprint when screen is turned off -->
   <java-symbol type="bool" name="config_supportScreenOffFod" />
 
+  <!-- Smart cutoff temperature -->
+  <java-symbol type="integer" name="config_smartCutoffTemperature" />
+  <java-symbol type="integer" name="config_smartCutoffResumeTemperature" />
+
 </resources>
